@@ -11,4 +11,11 @@ During the day (time lapse period) you can run the script to see what has been c
    Only newer files are time stamped
    The mp4 will be recreated from scratch using the time stamped files.
 
-A work in progress
+A work in progress - updating soon.
+
+Mi 15 Nov 2023 20:04:35 CET
+It takes a long time for the web interface to catch up when updating via ssh.
+
+Mi 15 Nov 2023 22:18:57 CET
+git clone with git@github.com:ausinch/time_lapse.git
+
