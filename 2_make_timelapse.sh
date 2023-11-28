@@ -12,6 +12,7 @@ local_dir="Pictures/time_lapse" # relative to users /home dir
 output_dir="~/Pictures"
 audio="no"
 stop_error="yes"
+no_process="no"
 
 ###  Functions
 function help()
@@ -74,6 +75,13 @@ if [ "$audio" == "yes" ]; then
     fi
 fi
 
+#  check if download dir exists
+if [ ! -d $local_dir ];then
+    echo "###  Creating $local_dir"
+    if [ "$audio" == "yes" ]; then spd-say "Creating download directory"; fi
+    mkdir $local_dir
+fi
+
 if [ "$audio" == "yes" ]; then spd-say "Starting file transfer"; fi
 
 rsync -av $ext_source/* $local_dir/
@@ -102,6 +110,17 @@ file_list="$(ls $local_dir/*.jpg)"
 if [ "$audio" == "yes" ]; then spd-say "Adding time stamp"; fi
 tput clear
 d_count="$(ls $local_dir/| wc -l)"
+#  check if there are files to work on
+if [ $d_count == 0 ]; then
+    echo "Nothing to process $local_dir is empty - Terminating"
+    if [ "$audio" == "yes" ]; then spd-say "Nothing to process.  Terminating"; fi
+    exit
+fi
+#  check if tmp dir exists
+if [ ! -d $local_dir/tmp ];then
+    mkdir $local_dir/tmp
+fi
+
 t_count="$(ls $local_dir/tmp/| wc -l)"
 echo "Inserting time stamps.  Frames: $d_count.  Already processed: $t_count"
 for mod_file in $file_list
@@ -141,7 +160,13 @@ frame_count="$(ls $local_dir/tmp/|wc -l)"
 if [ "$audio" == "yes" ]; then spd-say "Starting video render.  Frame count $frame_count"; fi
 echo "Starting video render. "
 echo " "
-ffmpeg -framerate 30 -pattern_type glob -i '$local_dir/tmp/*.jpg' -c:v libx264 -crf 17 -pix_fmt yuv420p $output_dir/timelapse_$mon$day.mp4 -y
+##  DEBUG
+echo "local_dir=$local_dir
+output_dir=$output_dir
+ffmpeg -framerate 30 -pattern_type glob -i $local_dir/tmp/*.jpg -c:v libx264 -crf 17 -pix_fmt yuv420p $output_dir/timelapse_$mon$day.mp4 -y"
+read -p "Hir enter to continue"
+
+ffmpeg -framerate 30 -pattern_type glob -i "$local_dir/tmp/*.jpg" -c:v libx264 -crf 17 -pix_fmt yuv420p $output_dir/timelapse_$mon$day.mp4 -y
 echo " "
 echo "All done.  Video saved as timelapse_$mon$day.mp4"
 if [ "$audio" == "yes" ]; then spd-say "All done."; fi
