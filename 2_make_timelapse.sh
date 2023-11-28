@@ -6,7 +6,7 @@
 #                 libcamera-still --width 1920 --height 1080 -t 43200000 --timelapse 10000 --datetime --rotation 180 -o Pictures/
 #   This will create a jpg every 10 secs for 52200000ms
 
-version="0.2 So 26 Nov 2023 16:42:14 CET"
+version="0.2 Di 28 Nov 2023 19:40:55 CET"
 ext_source="cam-pi1:~/Pictures"
 local_dir="Pictures/time_lapse" # relative to users /home dir
 output_dir="~/Pictures"
@@ -161,10 +161,10 @@ if [ "$audio" == "yes" ]; then spd-say "Starting video render.  Frame count $fra
 echo "Starting video render. "
 echo " "
 ##  DEBUG
-echo "local_dir=$local_dir
-output_dir=$output_dir
-ffmpeg -framerate 30 -pattern_type glob -i $local_dir/tmp/*.jpg -c:v libx264 -crf 17 -pix_fmt yuv420p $output_dir/timelapse_$mon$day.mp4 -y"
-read -p "Hir enter to continue"
+# echo "local_dir=$local_dir
+#output_dir=$output_dir
+#ffmpeg -framerate 30 -pattern_type glob -i $local_dir/tmp/*.jpg -c:v libx264 -crf 17 -pix_fmt yuv420p $output_dir/timelapse_$mon$day.mp4 -y"
+#read -p "Hir enter to continue"
 
 ffmpeg -framerate 30 -pattern_type glob -i "$local_dir/tmp/*.jpg" -c:v libx264 -crf 17 -pix_fmt yuv420p $output_dir/timelapse_$mon$day.mp4 -y
 echo " "

@@ -6,35 +6,42 @@
 #                 libcamera-still --width 1920 --height 1080 -t 43200000 --timelapse 10000 --datetime --rotation 180 -o Pictures/
 #   This will create a jpg every 10 secs for 52200000ms
 
-version="0.1 Mi 25 Okt 2023 08:50:08 CEST"
-ext_source="cam-pi1"
+version="0.2 Di 28 Nov 2023 19:40:55 CET"
+ext_source="cam-pi1:~/Pictures"
+local_dir="Pictures/time_lapse" # relative to users /home dir
+output_dir="~/Pictures"
 audio="no"
 stop_error="yes"
+no_process="no"
 
 ###  Functions
 function help()
 {
     echo -e "\nThis script will download *.jpg's from a RPi, time stamps it then renders a video.\nYou can run this script multiple times during the capture, only new files are processed since it was last run.
     \nUsage:
-    $0 [-a] [-d] [-t] [-e ext_source]
+    $0 [-a] [-d] [-t] [-e ext_source] [-l local_dir]
     $0 -h
 
-    -a          audio notifications (via spd-say)
-    -d          download files from the external source only. no other processing.
-    -t          no time stamp, generate video (not implemented)
-    -e source   the external source generating the pictures, DNS or IP (not implemented)
-    -f          ignore file transfer failures.  if there are no updates continue with time stamp and mp4 creation.
-    -p          do not Process mp4 file.
-    -h          help
+    -a              audio notifications (via spd-say)
+    -d              download files from the external source only. no other processing.
+    -t              no time stamp, generate video (not implemented)
+    -e source       the external source generating the pictures, DNS or IP (not implemented)
+    -l directory    Local directory to download files
+    -o directory    local directory where the mp4 will be saved
+    -f              ignore file transfer failures.  if there are no updates continue with time stamp and mp4 creation.
+    -p              do not Process mp4 file.
+    -h              help
     "
 }
 ###  Functions End
 #  Get parameters
-while getopts ade:hp opts; do
+while getopts ade:hpl:o: opts; do
     case ${opts} in
         a) audio="yes" ;;
         d) download="yes" ;;
         e) ext_source=${OPTARG} ;;
+        l) local_dir=${OPTARG} ;;
+        o) output_dir=${OPTARG} ;;
         p) no_process="yes" ;;
         f) stop_error="no";;
         n) note=${OPTARG} ;;
@@ -43,6 +50,19 @@ while getopts ade:hp opts; do
     esac
 done
 
+###  DEBUG
+#echo "DEBUG
+#audio=$audio
+#download=$download
+#ext_source=$ext_source
+#local_dir=$local_dir
+#output_dir=$output_dir
+#no_process=$no_process
+#stop_error=$stop_error
+#note=$note
+#"
+#exit
+#
 # check for spd-say for audio notification
 if [ "$audio" == "yes" ]; then
     whereis spd-say|grep bin;err=$?
@@ -55,9 +75,16 @@ if [ "$audio" == "yes" ]; then
     fi
 fi
 
+#  check if download dir exists
+if [ ! -d $local_dir ];then
+    echo "###  Creating $local_dir"
+    if [ "$audio" == "yes" ]; then spd-say "Creating download directory"; fi
+    mkdir $local_dir
+fi
+
 if [ "$audio" == "yes" ]; then spd-say "Starting file transfer"; fi
 
-rsync -av $ext_source:~/Pictures/* ~/Pictures/time_lapse
+rsync -av $ext_source/* $local_dir/
 err=$?
 if [ $err != 0 ];then
     echo "### rsync error: $err for source $ext_source"
@@ -79,16 +106,27 @@ if [ "$download" == "yes" ]; then
 fi
 
 ## * check if dir empty
-file_list="$(ls ~/Pictures/time_lapse/*.jpg)"
+file_list="$(ls $local_dir/*.jpg)"
 if [ "$audio" == "yes" ]; then spd-say "Adding time stamp"; fi
 tput clear
-d_count="$(ls /home/chris/Pictures/time_lapse/| wc -l)"
-t_count="$(ls /home/chris/Pictures/time_lapse/tmp/| wc -l)"
+d_count="$(ls $local_dir/| wc -l)"
+#  check if there are files to work on
+if [ $d_count == 0 ]; then
+    echo "Nothing to process $local_dir is empty - Terminating"
+    if [ "$audio" == "yes" ]; then spd-say "Nothing to process.  Terminating"; fi
+    exit
+fi
+#  check if tmp dir exists
+if [ ! -d $local_dir/tmp ];then
+    mkdir $local_dir/tmp
+fi
+
+t_count="$(ls $local_dir/tmp/| wc -l)"
 echo "Inserting time stamps.  Frames: $d_count.  Already processed: $t_count"
 for mod_file in $file_list
 do
     file_name="${mod_file: -14}"
-    new_file="/home/chris/Pictures/time_lapse/tmp/$file_name"
+    new_file="$local_dir/tmp/$file_name"
     #echo "mod_file: $mod_file"
     #echo "new_file: $new_file"
     # if the new_file doesnt exist then
@@ -118,11 +156,17 @@ if [ $no_process == "yes" ]; then
 fi
 sleep 3
 clear
-frame_count="$(ls /home/chris/Pictures/time_lapse/tmp/|wc -l)"
+frame_count="$(ls $local_dir/tmp/|wc -l)"
 if [ "$audio" == "yes" ]; then spd-say "Starting video render.  Frame count $frame_count"; fi
-echo "Starting video render.  Frame count: $frame_count"
+echo "Starting video render. "
 echo " "
-ffmpeg -framerate 30 -pattern_type glob -i '/home/chris/Pictures/time_lapse/tmp/*.jpg' -c:v libx264 -crf 17 -pix_fmt yuv420p timelapse_$mon$day.mp4 -y
+##  DEBUG
+# echo "local_dir=$local_dir
+#output_dir=$output_dir
+#ffmpeg -framerate 30 -pattern_type glob -i $local_dir/tmp/*.jpg -c:v libx264 -crf 17 -pix_fmt yuv420p $output_dir/timelapse_$mon$day.mp4 -y"
+#read -p "Hir enter to continue"
+
+ffmpeg -framerate 30 -pattern_type glob -i "$local_dir/tmp/*.jpg" -c:v libx264 -crf 17 -pix_fmt yuv420p $output_dir/timelapse_$mon$day.mp4 -y
 echo " "
 echo "All done.  Video saved as timelapse_$mon$day.mp4"
-if [ "$audio" == "yes" ]; then spd-say "All done.  Video saved as timelapse_$mon$day"; fi
+if [ "$audio" == "yes" ]; then spd-say "All done."; fi
