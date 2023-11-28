@@ -8,7 +8,7 @@
 
 version="0.2 So 26 Nov 2023 16:42:14 CET"
 ext_source="cam-pi1:~/Pictures"
-local_dir="~/Pictures/time_lapse"
+local_dir="Pictures/time_lapse" # relative to users /home dir
 output_dir="~/Pictures"
 audio="no"
 stop_error="yes"
@@ -50,18 +50,18 @@ while getopts ade:hpl:o: opts; do
 done
 
 ###  DEBUG
-echo "DEBUG
-audio=$audio
-download=$download
-ext_source=$ext_source
-local_dir=$local_dir
-output_dir=$output_dir
-no_process=$no_process
-stop_error=$stop_error
-note=$note
-"
-exit
-
+#echo "DEBUG
+#audio=$audio
+#download=$download
+#ext_source=$ext_source
+#local_dir=$local_dir
+#output_dir=$output_dir
+#no_process=$no_process
+#stop_error=$stop_error
+#note=$note
+#"
+#exit
+#
 # check for spd-say for audio notification
 if [ "$audio" == "yes" ]; then
     whereis spd-say|grep bin;err=$?
@@ -76,7 +76,7 @@ fi
 
 if [ "$audio" == "yes" ]; then spd-say "Starting file transfer"; fi
 
-rsync -av $ext_source $local_dir
+rsync -av $ext_source/* $local_dir/
 err=$?
 if [ $err != 0 ];then
     echo "### rsync error: $err for source $ext_source"
