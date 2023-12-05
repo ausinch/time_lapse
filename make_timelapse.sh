@@ -105,7 +105,6 @@ if [ "$download" == "yes" ]; then
     exit
 fi
 
-## * check if dir empty
 file_list="$(ls $local_dir/*.jpg)"
 if [ "$audio" == "yes" ]; then spd-say "Adding time stamp"; fi
 tput clear
@@ -157,14 +156,14 @@ fi
 sleep 3
 clear
 frame_count="$(ls $local_dir/tmp/|wc -l)"
-if [ "$audio" == "yes" ]; then spd-say "Starting video render.  Frame count $frame_count"; fi
-echo "Starting video render. "
+if [ "$audio" == "yes" ]; then spd-say "Starting video render. "; fi
+echo "Starting video render. Frame count $frame_count"
 echo " "
 ##  DEBUG
 # echo "local_dir=$local_dir
 #output_dir=$output_dir
 #ffmpeg -framerate 30 -pattern_type glob -i $local_dir/tmp/*.jpg -c:v libx264 -crf 17 -pix_fmt yuv420p $output_dir/timelapse_$mon$day.mp4 -y"
-#read -p "Hir enter to continue"
+#read -p "Hit enter to continue"
 
 ffmpeg -framerate 30 -pattern_type glob -i "$local_dir/tmp/*.jpg" -c:v libx264 -crf 17 -pix_fmt yuv420p $output_dir/timelapse_$mon$day.mp4 -y
 echo " "
