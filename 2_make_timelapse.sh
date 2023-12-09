@@ -5,8 +5,9 @@
 #   RPi command:  libcamera-still -t 52200000 --timelapse 10000 --datetime --lens-position 0 -o Pictures/
 #                 libcamera-still --width 1920 --height 1080 -t 43200000 --timelapse 10000 --datetime --rotation 180 -o Pictures/
 #   This will create a jpg every 10 secs for 52200000ms
+# 
 
-version="0.2 Di 28 Nov 2023 19:40:55 CET"
+version="0.3 Sa 09 Dez 2023 14:58:28 CET"
 ext_source="cam-pi1:~/Pictures"
 local_dir="Pictures/time_lapse" # relative to users /home dir
 output_dir="~/Pictures"
@@ -35,7 +36,7 @@ function help()
 }
 ###  Functions End
 #  Get parameters
-while getopts ade:hpl:o: opts; do
+while getopts ade:hpl:o:f opts; do
     case ${opts} in
         a) audio="yes" ;;
         d) download="yes" ;;
@@ -124,19 +125,21 @@ t_count="$(ls $local_dir/tmp/| wc -l)"
 echo "Inserting time stamps.  Frames: $d_count.  Already processed: $t_count"
 for mod_file in $file_list
 do
-    file_name="${mod_file: -14}"
+    #file_name="${mod_file: -14}"
+    file_name=$(date -r $mod_file "+%y%m%d%H%M%S".jpg)
     new_file="$local_dir/tmp/$file_name"
-    #echo "mod_file: $mod_file"
-    #echo "new_file: $new_file"
+    #echo "mod_file: $mod_file      new_file: $new_file"
     # if the new_file doesnt exist then
     if [ -f $new_file ]; then
         tput cup 1 0
         echo -n "skipping $new_file"
     else
-        mon=${file_name:0:2}
-        day=${file_name:2:2}
-        time=${file_name:4:4}
-        write_string="$day.$mon - $time"
+        #year=${file_name:0:2}
+        year=$(date -r $mod_file "+%Y")
+        mon=${file_name:2:2}
+        day=${file_name:4:2}
+        time=${file_name:6:4}
+        write_string="$year$mon$day - $time"
         tput cup 3 0
         echo "processing $new_file"
         ffmpeg -i $mod_file -vf "drawtext=fontfile=/usr/share/fonts/truetype/ubuntu/UbuntuMono-B.ttf: text='$write_string': x=(w-tw)/2: y=h-(2*lh): fontcolor=white: box=1: boxcolor=0x00000000@1: fontsize=30" $new_file

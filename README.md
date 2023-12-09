@@ -32,3 +32,7 @@ Add this to your crontab:
 \
 *Mi 15 Nov 2023 22:18:57 CET*
 git clone with git@github.com:ausinch/time_lapse.git
+
+Sa 09 Dez 2023 17:10:17 CET
+Udated time stamp source from the file name to the time stamp of the file (date it was created)\
+Next will be the option to obtain time stamp info from exif from the .jpg file.
