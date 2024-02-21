@@ -65,25 +65,36 @@ done
 #
 # check for spd-say for audio notification
 if [ "$audio" == "yes" ]; then
-    #whereis spd-say|grep bin;err=$?
-    which spd-say;err=$?
-    if [ "$err" != "0" ];then
-        echo "*** Note: spd-say is not found on your system"
-        echo "*** please install it with \"apt-get install speech-dispatcher\""
-        echo "*** Continuing without audio notifications"
-        audio="no"
-        sleep 5
+    which espeak-ng;err=$?
+    if [ "$err" == "0" ];then
+        audio_prg="espeak-ng"
+    else
+        which espeak;err=$?
+        if [ "$err" == "0" ];then
+            audio_prg="espeak"
+        else
+            which spd-say;err=$?
+            if [ "$err" == "0" ];then
+                audio_prg="spd-say"
+            else
+                echo "*** Note: spd-say is not found on your system"
+                echo "*** please install it with \"apt-get install speech-dispatcher\""
+                echo "*** Continuing without audio notifications"
+                audio="no"
+                sleep 5
+            fi
+        fi
     fi
 fi
 
 #  check if download dir exists
 if [ ! -d $local_dir ];then
     echo "###  Creating $local_dir"
-    if [ "$audio" == "yes" ]; then spd-say "Creating download directory"; fi
+    if [ "$audio" == "yes" ]; then ${audio_prg} "Creating download directory"; fi
     mkdir $local_dir
 fi
 
-if [ "$audio" == "yes" ]; then spd-say "Starting file transfer"; fi
+if [ "$audio" == "yes" ]; then ${audio_prg} "Starting file transfer"; fi
 
 rsync -av $ext_source/* $local_dir/
 err=$?
@@ -91,29 +102,29 @@ if [ $err != 0 ];then
     echo "### rsync error: $err for source $ext_source"
     if [ $stop_error == "yes" ];then 
         echo "###  Stopping"
-        if [ "$audio" == "yes" ]; then spd-say "Stopping.  Error $err"; fi
+        if [ "$audio" == "yes" ]; then ${audio_prg} "Stopping.  Error $err"; fi
         exit;end
     fi
     echo "Ctrl-c to terminate"
     sleep 3
 fi
 
-if [ "$audio" == "yes" ]; then spd-say "Transfer complete"; fi
+if [ "$audio" == "yes" ]; then ${audio_prg} "Transfer complete"; fi
 sleep 3
 if [ "$download" == "yes" ]; then
     echo "Terminating."
-    if [ "$audio" == "yes" ]; then spd-say "Terminating"; fi
+    if [ "$audio" == "yes" ]; then ${audio_prg} "Terminating"; fi
     exit
 fi
 
 file_list="$(ls $local_dir/*.jpg)"
-if [ "$audio" == "yes" ]; then spd-say "Adding time stamp"; fi
+if [ "$audio" == "yes" ]; then ${audio_prg} "Adding time stamp"; fi
 tput clear
 d_count="$(ls $local_dir/| wc -l)"
 #  check if there are files to work on
 if [ $d_count == 0 ]; then
     echo "Nothing to process $local_dir is empty - Terminating"
-    if [ "$audio" == "yes" ]; then spd-say "Nothing to process.  Terminating"; fi
+    if [ "$audio" == "yes" ]; then ${audio_prg} "Nothing to process.  Terminating"; fi
     exit
 fi
 #  check if tmp dir exists
@@ -147,17 +158,17 @@ done
 ## * check if $mon is there otherwise get value
 echo " "
 echo "Time stamp complete."
-if [ "$audio" == "yes" ]; then spd-say "Time stamp complete."; fi
+if [ "$audio" == "yes" ]; then ${audio_prg} "Time stamp complete."; fi
 echo " "
 if [ $no_process == "yes" ]; then
     echo "Video process terminated due to -p"
-    if [ "$audio" == "yes" ]; then spd-say "Video process terminated."; fi
+    if [ "$audio" == "yes" ]; then ${audio_prg} "Video process terminated."; fi
     exit
 fi
 sleep 3
 clear
 frame_count="$(ls $local_dir/tmp/|wc -l)"
-if [ "$audio" == "yes" ]; then spd-say "Starting video render. "; fi
+if [ "$audio" == "yes" ]; then ${audio_prg} "Starting video render. "; fi
 echo "Starting video render. Frame count $frame_count"
 echo " "
 ##  DEBUG
@@ -169,4 +180,4 @@ echo " "
 ffmpeg -framerate 30 -pattern_type glob -i "$local_dir/tmp/*.jpg" -c:v libx264 -crf 17 -pix_fmt yuv420p $output_dir/timelapse_$mon$day.mp4 -y
 echo " "
 echo "All done.  Video saved as timelapse_$mon$day.mp4"
-if [ "$audio" == "yes" ]; then spd-say "All done."; fi
+if [ "$audio" == "yes" ]; then ${audio_prg} "All done."; fi
