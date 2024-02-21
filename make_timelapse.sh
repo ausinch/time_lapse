@@ -65,7 +65,8 @@ done
 #
 # check for spd-say for audio notification
 if [ "$audio" == "yes" ]; then
-    whereis spd-say|grep bin;err=$?
+    #whereis spd-say|grep bin;err=$?
+    which spd-say;err=$?
     if [ "$err" != "0" ];then
         echo "*** Note: spd-say is not found on your system"
         echo "*** please install it with \"apt-get install speech-dispatcher\""
